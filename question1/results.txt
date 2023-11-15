@@ -1,0 +1,27 @@
+For the Theoretically optimal classifier, we have the following results:
+Min p(error) = 0.2579
+Discriminant = 1.337
+This would be an accuracy of 74.21%
+ - our quadractic results were about this which makes sense
+
+
+Linear classifier
+Training with 20
+Min p(error) = 0.4262
+Training with 200
+Min p(error) = 0.3887
+Training with 2000
+Min p(error) = 0.4
+
+Quadractic classifier
+Training with 20
+Min p(error) = 0.3495
+Training with 200
+Min p(error) = 0.2644
+Training with 2000
+Min p(error) = 0.26
+
+in report:
+
+mention the 0.6 / 0.4 = 1.5 for the Theoretical gamma
+how we get the Theoretical classifier g1 / g0 
