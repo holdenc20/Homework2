@@ -80,46 +80,9 @@ def generateDataFromGMM(N,gmmParameters):
         
     return x,labels
 
-def gradient_descent(loss_func, initial_w, X_Aug, y):
-    X_batch = []
-    y_batch = []
-    for i in range(0, len(y), 10):
-        nxt = min(i + 10, len(y) + 1)
-        X_batch.append(X_Aug[i:nxt, :])
-        y_batch.append(y[i:nxt])
-
-    trace = {}
-    trace['loss'] = []
-    trace['theta'] = []
-    
-    for i in range(100000):
-        loss_t = 0
-        for j in range(len(X_batch)):
-            loss, grad = loss_func(initial_w, X_batch[j], y_batch[j])
-            
-            loss_t += loss
-            initial_w = initial_w - 0.001 * grad 
-            
-            if np.linalg.norm(grad) < 1e-8:
-                break
-        
-        trace['loss'].append(np.mean(loss_t))
-        trace['theta'].append(initial_w)
-        if np.linalg.norm(grad) < 1e-8:
-            break
-    
-    return initial_w, trace
-
 def negative_log_posterior(X, y, gamma, sigma_squared = 1):
-    reg = gamma * sigma_squared * np.identity(X.shape[1])
+    reg = 1 / gamma * sigma_squared * np.identity(X.shape[1])
     return np.linalg.inv(X.T.dot(X) + reg).dot(X.T.dot(y))
-
-
-def neg_log_likelihood(w, X, y, sigma_squared = 1e5):
-    c = X.dot(w)
-    ll = (1/(2*sigma_squared)) * np.sum((c - y) ** 2)
-    grad = (1/(X.shape[0]*sigma_squared)) * X.T.dot(c - y)
-    return ll, grad
 
 def mse(w, X, y):
     c = X.dot(w)
@@ -149,7 +112,6 @@ if __name__ == "__main__":
     X2 = X_Aug[:,2]
     X_cubic = np.column_stack((X_Aug, X1 * X1, X1 * X2, X2 * X2,
                                     X1 * X1 * X1, X1 * X1 * X2, X1 * X2 * X2, X2 * X2 * X2))
-    initial_w = np.random.rand(X_cubic.shape[1])
     #validation data
     X_Aug_temp = np.column_stack((np.ones(1000), xval)) 
     X1 = X_Aug_temp[:,1]
@@ -157,20 +119,13 @@ if __name__ == "__main__":
     X_cubic_val = np.column_stack((X_Aug_temp, X1 * X1, X1 * X2, X2 * X2,
                                     X1 * X1 * X1, X1 * X1 * X2, X1 * X2 * X2, X2 * X2 * X2))
     
-    #i had to look up the gradient descent function
+    T_X_cubic = X_cubic.transpose()
     
-    low = 10000000
-    best_theta = []
-    #i had some issues converging so i ran it 100 times and took the best
-    for i in range(100):
-        theta, trace = gradient_descent(neg_log_likelihood, initial_w, X_cubic, ytrain)
-        m = mse(theta, X_cubic_val, yval)
-        if(m < low):
-            low = m
-            best_theta = theta
-    theta = best_theta
-    m = mse(theta, X_cubic_val, yval)
-    print("MSE: ", m)
+    #applying the formula derived in my write up
+    theta = np.linalg.inv(T_X_cubic.dot(X_cubic)).dot(T_X_cubic).dot(ytrain)
+    
+    mml = mse(theta, X_cubic_val, yval)
+    print("MSE: ", mml)
     
     x1s = np.linspace(-15,15,100)
     x2s = np.linspace(-4,4,100)
@@ -196,14 +151,16 @@ if __name__ == "__main__":
     plt.show()
     
     #MAP
-    gamma = 10 ** np.linspace(-6, 6, 1000)
+    gamma = 10 ** np.linspace(-8, -5, 1000)
     low = 10000000
     mses = []
+    mls = []
     best_theta = []
     for g in gamma:
         w = negative_log_posterior(X_cubic, ytrain, g)
         m = mse(w, X_cubic_val, yval)
         mses.append(m)
+        mls.append(mml)
         if(m < low):
             low = m
             best_theta = w
@@ -211,6 +168,7 @@ if __name__ == "__main__":
     print("Best Gamma: ", gamma[np.argmin(mses)])
     print("MSE: ", np.min(mses))
     plt.plot(gamma, mses)
+    plt.plot(gamma, mls)
     plt.xlabel('Gamma')
     plt.ylabel('MSE')
     plt.show()

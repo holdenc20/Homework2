@@ -53,7 +53,7 @@ def objective_func(pos, data, noise = 0.3):
     #not the noise here should be sigmax and sigmay but i am not sure what these should be
     sigmax = .125
     sigmay = .125
-    return sumx + (x**2 / sigmax**2), sumy + (y**2 / sigmay**2)
+    return np.sqrt((sumx + (x**2 / sigmax**2))**2 + (sumy + (y**2 / sigmay**2))**2)
 
     
 def generate_ranges(data, xtrue, ytrue, sd, N):
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     #given the true position 
     noise_sd = 0.3
     xtrue = .25
-    ytrue = -.25
+    ytrue = .25
     
     
     #generate ranges based on the noise and true position
@@ -119,13 +119,13 @@ for data_landmarks in list_data_landmarks:
     guesses = objective_func([X, Y], data)
 
     # These are loss values for each point
-    Z = np.column_stack((guesses[0].flatten(), guesses[1].flatten()))
-
+    #Z = np.column_stack((guesses[0].flatten(), guesses[1].flatten()))
+    Z = guesses
     # Plot points 2D
     fig, ax = plt.subplots()
     ax.scatter(data['x'], data['y'], c='r', marker='o', label='Landmarks')
 
-    cont = ax.contour(X, Y, Z.sum(axis=1).reshape(X.shape), levels=np.linspace(0, 1000, 11), cmap='RdGy')
+    cont = ax.contour(X, Y, Z, levels=np.linspace(0, 1000, 11), cmap='RdGy')
     circ = plt.Circle((0, 0), 1, color='blue', fill=False)
     plt.scatter(xtrue, ytrue, c='g', marker='+', label='True Position')
     ax.add_patch(circ)
